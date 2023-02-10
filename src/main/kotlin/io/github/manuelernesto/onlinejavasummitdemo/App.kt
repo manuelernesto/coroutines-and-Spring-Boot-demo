@@ -1,6 +1,6 @@
 package io.github.manuelernesto.onlinejavasummitdemo
 
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
@@ -27,7 +27,7 @@ interface SpeakerRepository : CoroutineCrudRepository<Speaker, Int>
 
 @Service
 class SpeakerService(private val repository: SpeakerRepository) {
-    fun get(): Flow<Speaker> = repository.findAll()
+    suspend fun get() = repository.findAll().toList()
 
 
     suspend fun save(speaker: Speaker) = repository.save(speaker)
@@ -57,7 +57,7 @@ class SpeakerService(private val repository: SpeakerRepository) {
 class SpeakerController(private val service: SpeakerService) {
 
     @GetMapping
-    fun getAllSpeakers() = service.get()
+    suspend fun getAllSpeakers() = service.get()
 
     @GetMapping("/{id}")
     suspend fun getById(@PathVariable id: Int) = service.get(id)
@@ -66,7 +66,6 @@ class SpeakerController(private val service: SpeakerService) {
     @ResponseStatus(HttpStatus.CREATED)
     suspend fun save(@RequestBody speaker: Speaker) =
         service.save(speaker)
-
 
 
     @PutMapping("/{id}")
