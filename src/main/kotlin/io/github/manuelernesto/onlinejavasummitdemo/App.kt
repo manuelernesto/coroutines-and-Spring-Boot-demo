@@ -1,5 +1,6 @@
 package io.github.manuelernesto.onlinejavasummitdemo
 
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
@@ -25,16 +26,19 @@ data class Speaker(
 
 
 @Repository
-interface SpeakerRepository : CoroutineCrudRepository<Speaker, Int> {
-    suspend fun getAll(): List<Speaker>
-}
+interface SpeakerRepository : CoroutineCrudRepository<Speaker, Int>
 
 @Service
 class SpeakerService(private val repository: SpeakerRepository) {
     suspend fun save(speaker: Speaker) = repository.save(speaker)
-    suspend fun get() = repository.getAll()
+    fun get() = repository.findAll()
 
-    suspend fun get(id: Int) = repository.findById(id)
+    suspend fun get(id: Int): Speaker? {
+        return if (repository.existsById(id)) {
+            repository.findById(id)
+        } else throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    }
+
     suspend fun update(speaker: Speaker, id: Int): Speaker {
         return if (repository.existsById(id)) {
             speaker.id = id
@@ -54,7 +58,7 @@ class SpeakerService(private val repository: SpeakerRepository) {
 class SpeakerController(private val service: SpeakerService) {
 
     @GetMapping
-    suspend fun getAll() = service.get()
+    suspend fun getAll() = service.get().toList()
 
     @GetMapping("/{id}")
     suspend fun getById(@PathVariable id: Int) = service.get(id)
