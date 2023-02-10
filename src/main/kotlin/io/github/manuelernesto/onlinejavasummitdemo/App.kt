@@ -1,7 +1,7 @@
 package io.github.manuelernesto.onlinejavasummitdemo
 
+import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
-import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.http.HttpStatus
@@ -18,23 +18,19 @@ import org.springframework.web.server.ResponseStatusException
 
 @Table("speaker")
 data class Speaker(
-    @Id var id: Int?,
-    val name: String,
-    val company: String,
-    val talk: String
+    @Id var id: Int?, val name: String, val company: String, val talk: String
 )
 
 
 @Repository
-interface SpeakerRepository : CoroutineCrudRepository<Speaker, Int>{
-    @Query("SELECT * FROM speaker")
-    suspend fun getAll(): List<Speaker>
-}
+interface SpeakerRepository : CoroutineCrudRepository<Speaker, Int>
 
 @Service
 class SpeakerService(private val repository: SpeakerRepository) {
+    fun get(): Flow<Speaker> = repository.findAll()
+
+
     suspend fun save(speaker: Speaker) = repository.save(speaker)
-    suspend fun get() = repository.getAll()
 
     suspend fun get(id: Int): Speaker? {
         return if (repository.existsById(id)) {
@@ -61,7 +57,7 @@ class SpeakerService(private val repository: SpeakerRepository) {
 class SpeakerController(private val service: SpeakerService) {
 
     @GetMapping
-    suspend fun getAllSpeakers() = service.get()
+    fun getAllSpeakers() = service.get()
 
     @GetMapping("/{id}")
     suspend fun getById(@PathVariable id: Int) = service.get(id)
@@ -71,11 +67,12 @@ class SpeakerController(private val service: SpeakerService) {
     suspend fun save(@RequestBody speaker: Speaker) =
         service.save(speaker)
 
+
+
     @PutMapping("/{id}")
     suspend fun update(@PathVariable id: Int, @RequestBody speaker: Speaker) = service.update(speaker, id)
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     suspend fun delete(@PathVariable id: Int) = service.delete(id)
-
 }
