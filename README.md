@@ -1,2 +1,1 @@
-# The practical guide to build async services with Kotlin, Coroutines and Spring Boot 
-# DEMO PROJECT
+## The practical guide to build async services with Kotlin, Coroutines and Spring Boot
